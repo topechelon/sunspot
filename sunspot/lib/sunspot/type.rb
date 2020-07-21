@@ -6,7 +6,7 @@ rescue LoadError
 end
 
 module Sunspot
-  # 
+  #
   # This module contains singleton objects that represent the types that can be
   # indexed and searched using Sunspot. Plugin developers should be able to
   # add new constants to the Type module; as long as they implement the
@@ -75,6 +75,10 @@ module Sunspot
         false
       end
 
+      def accepts_docvalues?
+        false
+      end
+
       def to_literal(object)
         raise(
           ArgumentError,
@@ -83,7 +87,7 @@ module Sunspot
       end
     end
 
-    # 
+    #
     # Text is a special type that stores data for fulltext search. Unlike other
     # types, Text fields are tokenized and are made available to the keyword
     # search phrase. Text fields cannot be faceted, ordered upon, or used in
@@ -112,7 +116,7 @@ module Sunspot
       end
     end
 
-    # 
+    #
     # The String type represents string data.
     #
     class StringType < AbstractType
@@ -127,10 +131,14 @@ module Sunspot
       def cast(string) #:nodoc:
         string
       end
+
+      def accepts_docvalues?
+        true
+      end
     end
     register(StringType, String)
 
-    # 
+    #
     # The Integer type represents integers.
     #
     class IntegerType < AbstractType
@@ -149,10 +157,14 @@ module Sunspot
       def cast(string) #:nodoc:
         string.to_i
       end
+
+      def accepts_docvalues?
+        true
+      end
     end
     register(IntegerType, Integer)
 
-    # 
+    #
     # The Long type indexes Ruby Fixnum and Bignum numbers into Java Longs
     #
     class LongType < IntegerType
@@ -161,7 +173,7 @@ module Sunspot
       end
     end
 
-    # 
+    #
     # The Float type represents floating-point numbers.
     #
     class FloatType < AbstractType
@@ -180,10 +192,14 @@ module Sunspot
       def cast(string) #:nodoc:
         string.to_f
       end
+
+      def accepts_docvalues?
+        true
+      end
     end
     register(FloatType, Float)
 
-    # 
+    #
     # The Double type indexes Ruby Floats (which are in fact doubles) into Java
     # Double fields
     #
@@ -193,7 +209,7 @@ module Sunspot
       end
     end
 
-    # 
+    #
     # The time type represents times. Note that times are always converted to
     # UTC before indexing, and facets of Time fields always return times in UTC.
     #
@@ -222,6 +238,10 @@ module Sunspot
         end
       end
 
+      def accepts_docvalues?
+        true
+      end
+
       private
 
       def value_to_utc_time(value)
@@ -240,7 +260,7 @@ module Sunspot
     end
     register TimeType, Time, DateTime
 
-    # 
+    #
     # The DateType encapsulates dates (without time information). Internally,
     # Solr does not have a date-only type, so this type indexes data using
     # Solr's DateField type (which is actually date/time), midnight UTC of the
@@ -249,7 +269,7 @@ module Sunspot
     class DateType < TimeType
       def to_indexed(value) #:nodoc:
         if value
-          time = 
+          time =
             if %w(year mon mday).all? { |method| value.respond_to?(method) }
               Time.utc(value.year, value.mon, value.mday)
             else
@@ -267,7 +287,7 @@ module Sunspot
     end
     register DateType, Date
 
-    # 
+    #
     # Store integers in a TrieField, which makes range queries much faster.
     #
     class TrieIntegerType < IntegerType
@@ -276,7 +296,7 @@ module Sunspot
       end
     end
 
-    # 
+    #
     # Store floats in a TrieField, which makes range queries much faster.
     #
     class TrieFloatType < FloatType
@@ -285,7 +305,7 @@ module Sunspot
       end
     end
 
-    # 
+    #
     # Index times using a TrieField. Internally, trie times are indexed as
     # Unix timestamps in a trie integer field, as TrieField does not support
     # datetime types natively. This distinction should have no effect from the
@@ -298,7 +318,7 @@ module Sunspot
     end
 
 
-    # 
+    #
     # The boolean type represents true/false values. Note that +nil+ will not be
     # indexed at all; only +false+ will be indexed with a false value.
     #
@@ -323,10 +343,14 @@ module Sunspot
           string
         end
       end
+
+      def accepts_docvalues?
+        true
+      end
     end
     register BooleanType, TrueClass, FalseClass
 
-    # 
+    #
     # The Location type encodes geographical coordinates as a GeoHash.
     # The data for this type must respond to the `lat` and `lng` methods; you
     # can use Sunspot::Util::Coordinates as a wrapper if your source data does
@@ -354,7 +378,7 @@ module Sunspot
       end
     end
 
-    # 
+    #
     # The Latlon type encodes geographical coordinates in the native
     # Solr LatLonType.
     #

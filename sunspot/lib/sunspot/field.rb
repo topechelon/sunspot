@@ -13,8 +13,10 @@ module Sunspot
       @stored = !!options.delete(:stored)
       @more_like_this = !!options.delete(:more_like_this)
       @multiple ||= false
+      @docvalues ||= false
       set_indexed_name(options)
       raise ArgumentError, "Field of type #{type} cannot be used for more_like_this" unless type.accepts_more_like_this? or !@more_like_this
+      raise ArgumentError, "Field of type #{type} does not support docvalues" unless type.accepts_docvalues? or !@docvalues
     end
 
     # Convert a value to its representation for Solr indexing. This delegates
@@ -83,6 +85,17 @@ module Sunspot
     end
 
     #
+    # Whether this field accepts docvalues.
+    #
+    # ==== Returns
+    #
+    # Boolean:: True if this field accepts docvalues.
+    #
+    def docvalues?
+      !!@docvalues
+    end
+
+    #
     # Whether the field was joined from another model.
     #
     # ==== Returns
@@ -137,7 +150,7 @@ module Sunspot
           options.delete(:as).to_s
         else
           name = options[:prefix] ? @name.to_s.sub(/^#{options[:prefix]}_/, '') : @name
-          "#{@type.indexed_name(name)}#{'m' if multiple? }#{'s' if @stored}#{'v' if more_like_this?}"
+          "#{@type.indexed_name(name)}#{'m' if multiple? }#{'s' if @stored}#{'v' if more_like_this?}#{'d' if docvalues?}"
         end
     end
 
@@ -178,6 +191,7 @@ module Sunspot
   class AttributeField < Field #:nodoc:
     def initialize(name, type, options = {})
       @multiple = !!options.delete(:multiple)
+      @docvalues = !!options.delete(:docvalues)
       super(name, type, options)
       @reference =
         if (reference = options.delete(:references)).respond_to?(:name)
@@ -199,6 +213,7 @@ module Sunspot
 
     def initialize(name, type, options = {})
       @multiple = !!options.delete(:multiple)
+      @docvalues = !!options.delete(:docvalues)
 
       super(name, type, options)
 
@@ -274,4 +289,3 @@ module Sunspot
     end
   end
 end
-
