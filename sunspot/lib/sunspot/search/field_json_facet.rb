@@ -5,14 +5,15 @@ module Sunspot
       attr_reader :name
 
       def initialize(field, search, options)
-        @name, @search, @options = (options[:name] || field.name), search, options
+        @name, @search, @options = name, search, options
         @field = field
       end
 
       def rows
         @rows ||=
           begin
-            data = no_data? ? [] : @search.json_facet_response[@field.name.to_s]['buckets']
+            json_facet_response = @search.json_facet_response[@field.name.to_s]
+            data = json_facet_response.nil? ? [] : json_facet_response['buckets']
             rows = []
             data.each do |d|
               rows << JsonFacetRow.new(d, self)
@@ -26,18 +27,6 @@ module Sunspot
             rows
           end
 
-      end
-
-      def no_data?
-        @search.json_facet_response[@field.name.to_s].nil?
-      end
-
-      def other_count(type)
-        json_facet_for_field = @search.json_facet_response[@field.name.to_s]
-        return 0 if json_facet_for_field.nil?
-
-        other = json_facet_for_field[type.to_s] || {}
-        other['count']
       end
     end
   end
